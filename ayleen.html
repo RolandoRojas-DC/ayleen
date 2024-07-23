@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recyclothing</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+</head>
+
+<style>
+    /* Estilos generales */
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Estilos del navbar */
+    header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #333;
+    }
+
+    nav ul {
+        display: flex;
+        justify-content: flex-end;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    nav ul li {
+        margin: 0 10px;
+    }
+
+    nav ul li a {
+        color: #fff;
+        text-decoration: none;
+    }
+
+    nav ul li a:hover {
+        color: #f00;
+    }
+
+    /* Estilos de las secciones */
+    .section {
+        padding-top: 80px;
+        /* Agregado de padding superior */
+        padding-bottom: 80px;
+        /* Agregado de padding inferior */
+    }
+
+    /* Estilos del footer */
+    footer {
+        background-color: #f2f2f2;
+        padding: 20px;
+        width: 100%;
+        text-align: center;
+        /* Centrado horizontal del contenido */
+    }
+
+    #formulario {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    #formulario label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    #formulario input,
+    #formulario select {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    #formulario input[type="submit"],
+    #formulario button {
+        width: auto;
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #formulario input[type="submit"]:hover,
+    #formulario button:hover {
+        background-color: #45a049;
+    }
+
+    #tabla {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    #tabla th,
+    #tabla td {
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    #tabla th {
+        background-color: #f2f2f2;
+        text-align: left;
+    }
+
+    /* Estilos de los productos */
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .product-item {
+        text-align: center;
+    }
+
+    .product-item img {
+        max-width: 100%;
+        width: 30%;
+        /* Tamaño del 30% del ancho de la página */
+    }
+
+    /* Estilos para dispositivos móviles */
+    @media screen and (max-width: 600px) {
+
+        /* Estilos del navbar */
+        nav ul {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        nav ul li {
+            margin: 10px 0;
+        }
+
+        /* Estilos de las secciones */
+        .section {
+            padding-top: 100px;
+            padding-bottom: 100px;
+        }
+    }
+
+    .section1-grid {
+        display: flex;
+        justify-content: center;
+    }
+
+    .section1-grid .slide {
+        flex: 0 0 30%;
+        max-width: 30%;
+        margin: 0 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .section1-grid .slide img {
+        width: 100%;
+        display: block;
+    }
+
+    .section1-grid .slide h1 {
+        text-align: center;
+    }
+
+    #seccion2 .imagenquienessomos {
+        width: 200px;
+        display: block;
+        margin: 0 auto;
+    }
+
+    #seccion2 .parrafo {
+        text-align: center;
+    }
+</style>
+
+
+<script>
+    function mostrarSeccion(seccionId) {
+        // Oculta todas las secciones
+        var secciones = document.getElementsByClassName("section");
+        for (var i = 0; i < secciones.length; i++) {
+            secciones[i].style.display = "none";
+        }
+
+        // Muestra la sección específica
+        var seccion = document.getElementById(seccionId);
+        if (seccion) {
+            seccion.style.display = "block";
+        }
+    }
+
+    // Mostrar sección 1 al cargar la página
+    window.onload = function () {
+        mostrarSeccion('seccion1');
+    };
+
+    $(document).ready(function () {
+        var editando = false; // Bandera para indicar si se está editando una fila
+        var filaEditando = null; // Almacena la referencia de la fila que se está editando
+
+        // Al enviar el formulario
+        $("#formulario").submit(function (event) {
+            event.preventDefault(); // Evitar que se envíe el formulario
+
+            // Obtener los valores de los campos
+            var nombre = $("#nombre").val();
+            var numero = $("#numero").val();
+            var correo = $("#correo").val();
+            var tipo = $("input[name='tipo']:checked").val();
+            var producto = $("#producto option:selected").text();
+            var cantidad = $("input[name='cantidad']:checked").val();
+            var fecha = new Date().toLocaleDateString(); // Obtener la fecha actual
+
+            if (editando) {
+                // Si se está editando una fila, actualizar los datos
+                filaEditando.children("td:nth-child(1)").text(nombre);
+                filaEditando.children("td:nth-child(2)").text(numero);
+                filaEditando.children("td:nth-child(3)").text(correo);
+                filaEditando.children("td:nth-child(4)").text(tipo);
+                filaEditando.children("td:nth-child(5)").text(producto);
+                filaEditando.children("td:nth-child(6)").text(cantidad);
+                filaEditando.children("td:nth-child(7)").text(fecha);
+
+                // Restaurar los valores de edición
+                editando = false;
+                filaEditando = null;
+
+                alert("Cotización actualizada exitosamente");
+            } else {
+                // Crear una nueva fila en la tabla con los datos ingresados
+                var fila =
+                    "<tr><td>" +
+                    nombre +
+                    "</td><td>" +
+                    numero +
+                    "</td><td>" +
+                    correo +
+                    "</td><td>" +
+                    tipo +
+                    "</td><td>" +
+                    producto +
+                    "</td><td>" +
+                    cantidad +
+                    "</td><td>" +
+                    fecha +
+                    "</td><td><button class='editar'>Editar</button> <button class='eliminar'>Eliminar</button></td></tr>";
+                $("#tabla tbody").append(fila);
+
+                alert("Cotización guardada exitosamente");
+            }
+
+            // Limpiar los campos del formulario
+            $("#nombre").val("");
+            $("#numero").val("");
+            $("#correo").val("");
+            $("input[name='tipo']").prop("checked", false);
+            $("#producto").val("");
+            $("input[name='cantidad']").prop("checked", false);
+        });
+
+        // Editar una fila al hacer clic en el botón "Editar"
+        $("#tabla").on("click", ".editar", function () {
+            editando = true;
+            filaEditando = $(this).closest("tr");
+
+            // Obtener los valores de la fila a editar
+            var nombre = filaEditando.children("td:nth-child(1)").text();
+            var numero = filaEditando.children("td:nth-child(2)").text();
+            var correo = filaEditando.children("td:nth-child(3)").text();
+            var tipo = filaEditando.children("td:nth-child(4)").text();
+            var producto = filaEditando.children("td:nth-child(5)").text();
+            var cantidad = filaEditando.children("td:nth-child(6)").text();
+
+            // Establecer los valores en el formulario de edición
+            $("#nombre").val(nombre);
+            $("#numero").val(numero);
+            $("#correo").val(correo);
+
+            if (tipo === "Permuta") {
+                $("#permuta").prop("checked", true);
+            } else if (tipo === "Venta") {
+                $("#venta").prop("checked", true);
+            }
+
+            if (producto === "Vestuario") {
+                $("#producto").val("Vestuario");
+            } else if (producto === "Calzado") {
+                $("#producto").val("Calzado");
+            }
+
+            $("input[name='cantidad'][value='" + cantidad + "']").prop("checked", true);
+        });
+
+        // Eliminar una fila al hacer clic en el botón "Eliminar"
+        $("#tabla").on("click", ".eliminar", function () {
+            $(this).closest("tr").remove();
+        });
+
+        // Exportar a JSON
+        $("#exportar-json").click(function () {
+            var datos = [];
+
+            // Recorrer las filas de la tabla y obtener los datos
+            $("#tabla tbody tr").each(function () {
+                var fila = $(this);
+                var nombre = fila.children("td:nth-child(1)").text();
+                var numero = fila.children("td:nth-child(2)").text();
+                var correo = fila.children("td:nth-child(3)").text();
+                var tipo = fila.children("td:nth-child(4)").text();
+                var producto = fila.children("td:nth-child(5)").text();
+                var cantidad = fila.children("td:nth-child(6)").text();
+                var fecha = fila.children("td:nth-child(7)").text();
+
+                // Crear un objeto con los datos de la fila
+                var filaDatos = {
+                    nombre: nombre,
+                    numero: numero,
+                    correo: correo,
+                    tipo: tipo,
+                    producto: producto,
+                    cantidad: cantidad,
+                    fecha: fecha
+                };
+
+                // Agregar el objeto a la lista de datos
+                datos.push(filaDatos);
+            });
+
+            // Convertir los datos a JSON
+            var json = JSON.stringify(datos);
+
+            // Descargar el archivo JSON
+            var blob = new Blob([json], { type: "application/json" });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = "datos.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    });
+
+    function cambiarColorFondo() {
+        var body = document.querySelector("body");
+        body.style.backgroundColor = getRandomColor();
+    }
+
+    function getRandomColor() {
+        var letters = "0123456789ABCDEF";
+        var color = "#";
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    function cambiarFuente(fuente) {
+        document.body.style.fontFamily = fuente;
+    }
+
+    function cambiarColorTexto(color) {
+        document.body.style.color = color;
+    }
+
+    function cambiarColorFondo(color) {
+        document.body.style.backgroundColor = color;
+    }
+
+    function desaparecerImagenes() {
+        var imagenes = document.getElementsByTagName('img');
+        for (var i = 0; i < imagenes.length; i++) {
+            imagenes[i].style.display = 'none';
+        }
+    }
+
+    function cambiarFooter(texto) {
+        var footer = document.querySelector('footer');
+        footer.innerHTML = '<div class="phone-symbol">&#9742;<div class="phone-number">' + texto + '</div></div>';
+    }
+</script>
+<header>
+    <nav>
+        <ul>
+            <li>
+                <a href="#Inicio" onclick="mostrarSeccion('seccion1')">Inicio</a>
+            </li>
+            <li>
+                <a href="#Quienes_Somos" onclick="mostrarSeccion('seccion2')">Quienes Somos</a>
+            </li>
+            <li>
+                <a href="#Agenda_tu_visita" onclick="mostrarSeccion('seccion3')">Agenda tu visita</a>
+            </li>
+            <li>
+                <a href="#CompraAquí" onclick="mostrarSeccion('seccion4')">Compra en línea Aquí</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<body>
+
+
+    <section class="section" id="seccion1">
+        <a id="Inicio"></a>
+        <div class="carousel">
+            <div class="section1-grid">
+                <div class="slide">
+                    <img src="https://cdn.pixabay.com/photo/2018/10/28/18/25/used-clothing-3779497_1280.jpg"
+                        alt="Imagen 1" />
+                </div>
+                <div class="slide">
+                    <img src="https://cdn.pixabay.com/photo/2014/04/03/11/35/shopping-311924_1280.png" alt="Imagen 2" />
+                    <h1>RECYCLOTHING</h1>
+                </div>
+                <div class="slide">
+                    <img src="https://cdn.pixabay.com/photo/2016/04/08/18/46/shopping-mall-1316787_1280.jpg"
+                        alt="Imagen 3" />
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <button onclick="cambiarFuente('Arial')">Cambiar fuente</button>
+            <button onclick="cambiarColorTexto('red')">Cambiar color a rojo</button>
+            <button onclick="cambiarColorFondo('blue')">Cambiar color de fondo</button>
+            <button onclick="desaparecerImagenes()">Desaparecer imágenes</button>
+            <button onclick="cambiarFooter('中文')">Cambiar footer a chino</button>
+        </div>
+    </section>
+
+    <section class="section" id="seccion2">
+        <a id="Quienes_Somos"></a>
+        <img class="imagenquienessomos"
+            src="https://img.freepik.com/foto-gratis/ecologia-voluntario-reciclar-camiseta_23-2147826127.jpg?w=740&t=st=1687648503~exp=1687649103~hmac=991c8bfc9f3593f71947b0dd88fb5cd54f9ec956e2fb67eae544c14d3f8194c1"
+            alt="Imagen 3" />
+
+        <p class="parrafo">
+            Considerando que una prenda puede tardar hasta 200 años en descomponerse, las empresas textiles han tomado
+            cada vez más conciencia y han implementado acciones para contrarrestar este impacto. <br>
+            Bajo la estrategia Reutiliza, Tienda Recyclothing, implementó medidas para promover la economía circular y
+            extender la vida útil de cualquier prenda. Bajo el concepto de “nada se pierde, todo se reutiliza”, la
+            empresa nacional ha creado distintos servicios para que todos puedan llevar su ropa vieja y darle una nueva
+            vida.
+        </p>
+
+    </section>
+
+    <section class="section" id="seccion3">
+        <a id="Agenda_tu_visita"></a>
+        <h1 style="text-align: center;">Formulario</h1>
+
+        <form id="formulario">
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" required /><br /><br />
+
+            <label for="numero">Número de contacto:</label>
+            <input type="number" id="numero" required /><br /><br />
+
+            <label for="correo">Correo:</label>
+            <input type="email" id="correo" required /><br /><br />
+
+            <label>Permuta o Venta:</label><br />
+            <input type="checkbox" id="permuta" name="tipo" value="Permuta" />
+            Permuta<br />
+            <input type="checkbox" id="venta" name="tipo" value="Venta" />
+            Venta<br /><br />
+
+            <label for="producto">Vestuario o Calzado:</label>
+            <select id="producto" required>
+                <option value="">Seleccione una opción</option>
+                <option value="Vestuario">Vestuario</option>
+                <option value="Calzado">Calzado</option>
+            </select><br /><br />
+
+            <label for="cantidad">Cantidad de Prendas:</label><br />
+            <input type="radio" id="prenda1" name="cantidad" value="1" required />
+            1<br />
+            <input type="radio" id="prenda2" name="cantidad" value="2" /> 2<br />
+            <input type="radio" id="prenda3" name="cantidad" value="3" /> 3<br />
+            <input type="radio" id="prenda4" name="cantidad" value="4" /> 4<br />
+            <input type="radio" id="prenda6" name="cantidad" value="6+" />
+            6+<br /><br />
+
+            <input type="submit" value="Enviar" />
+            <button id="exportar-json">Exportar a JSON</button>
+        </form>
+
+        <h2>Datos almacenados</h2>
+
+        <table id="tabla">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Número de contacto</th>
+                    <th>Correo</th>
+                    <th>Permuta o Venta</th>
+                    <th>Vestuario o Calzado</th>
+                    <th>Cantidad de Prendas</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+
+    <section class="section" id="seccion4">
+        <a id="CompraAquí"></a>
+        <div class="product-grid">
+            <div class="product-item">
+                <img src="https://z-p3-scontent.fscl29-1.fna.fbcdn.net/v/t45.5328-4/354903679_5815676915201127_4846657125489674709_n.jpg?stp=dst-jpg_p720x720&_nc_cat=102&ccb=1-7&_nc_sid=c48759&_nc_eui2=AeECIZixKKZoqVqVyCUMAQIF0EncYazGqRHQSdxhrMapEbqMpkAIh9qNJdacsj79scc&_nc_ohc=7StCj59biC8AX-vMlGl&_nc_ht=z-p3-scontent.fscl29-1.fna&oh=00_AfCyDuSrqoxnHuXvBRHjdplI6t5VVpdeHOOEFRV3ivliAA&oe=6498E1DC"
+                    alt="" />
+                <div class="description">Descripción del producto 1</div>
+                <div class="price">$3.000</div>
+            </div>
+            <div class="product-item">
+                <img src="https://z-p3-scontent.fscl29-1.fna.fbcdn.net/v/t45.5328-4/355580450_6351887471514100_8622688178493301647_n.jpg?stp=dst-jpg_p720x720&_nc_cat=103&ccb=1-7&_nc_sid=c48759&_nc_eui2=AeGPOQ7vuugeUWzzY4OJ0VOwYZaDIkW0eOJhloMiRbR44tO-9REDJlZ6oQgGKbtvouY&_nc_ohc=obVcA2LfHiwAX-itYLr&_nc_ht=z-p3-scontent.fscl29-1.fna&oh=00_AfDx9NUYUPrIksfesEsR5Vc-RIto8A534WREds2mhAe8eA&oe=649855F9"
+                    alt="" />
+                <div class="description">Descripción del producto 2</div>
+                <div class="price">$2.500</div>
+            </div>
+            <div class="product-item">
+                <img src="https://z-p3-scontent.fscl29-1.fna.fbcdn.net/v/t45.5328-4/349865262_9355508117855481_2760364164690284181_n.jpg?stp=dst-jpg_p720x720&_nc_cat=100&ccb=1-7&_nc_sid=c48759&_nc_eui2=AeFQIEtGgIhy6bfWe4j-5QbYYjBGW3RHllViMEZbdEeWVStBG23TiDZfBBmu3NF0uTo&_nc_ohc=-LyqACt01L8AX_UowqS&_nc_ht=z-p3-scontent.fscl29-1.fna&oh=00_AfC4dr4IJ7XOrvDUDJ5fya_8yHMuubtD_J1YoW4zIYHaUg&oe=64990D53"
+                    alt="" />
+                <div class="description">Descripción del producto 3</div>
+                <div class="price">$3.400</div>
+            </div>
+        </div>
+    </section>
+    </main>
+
+    <footer>
+        <div class="phone-symbol">&#9742;
+            <div class="phone-number">+56971366552</div>
+        </div>
+    </footer>
+</body>
+
+</html>
